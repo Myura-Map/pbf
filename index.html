@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Myura PGF Glyphs</title>
+    <meta name="description" content="CDN-hosted MapLibre positioned glyph font (PGF) ranges for Khmer and other complex scripts.">
+    <style>
+        :root {
+            color-scheme: light dark;
+            --bg: #f8f4f0;
+            --card: #fff;
+            --text: #1a1a1a;
+            --muted: #5c534a;
+            --accent: #c45c26;
+            --border: #e8dfd6;
+            --code-bg: #f0ebe4;
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #141210;
+                --card: #1e1b18;
+                --text: #f2ebe3;
+                --muted: #a89b8f;
+                --accent: #e8844f;
+                --border: #2e2924;
+                --code-bg: #26221e;
+            }
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            font-family: "Hanuman", "Noto Sans Khmer", system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.55;
+        }
+        .wrap {
+            max-width: 52rem;
+            margin: 0 auto;
+            padding: 2.5rem 1.25rem 4rem;
+        }
+        h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin: 0 0 0.35rem;
+            letter-spacing: -0.02em;
+        }
+        .tagline {
+            color: var(--muted);
+            margin: 0 0 2rem;
+            font-size: 1.05rem;
+        }
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 1.25rem 1.35rem;
+            margin-bottom: 1rem;
+        }
+        .card h2 {
+            font-size: 1rem;
+            margin: 0 0 0.75rem;
+            font-weight: 600;
+        }
+        .badge {
+            display: inline-block;
+            font-size: 0.72rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--accent);
+            border: 1px solid var(--accent);
+            border-radius: 4px;
+            padding: 0.15rem 0.45rem;
+            margin-bottom: 0.5rem;
+        }
+        .meta {
+            font-size: 0.9rem;
+            color: var(--muted);
+            margin: 0.25rem 0 0.75rem;
+        }
+        a { color: var(--accent); }
+        code, pre {
+            font-family: ui-monospace, "SF Mono", Menlo, monospace;
+            font-size: 0.82rem;
+        }
+        code {
+            background: var(--code-bg);
+            padding: 0.12rem 0.35rem;
+            border-radius: 4px;
+            word-break: break-all;
+        }
+        pre {
+            background: var(--code-bg);
+            border-radius: 8px;
+            padding: 0.9rem 1rem;
+            overflow-x: auto;
+            margin: 0.5rem 0 0;
+            line-height: 1.45;
+        }
+        ul.files {
+            list-style: none;
+            padding: 0;
+            margin: 0.5rem 0 0;
+        }
+        ul.files li {
+            padding: 0.35rem 0;
+            border-top: 1px solid var(--border);
+        }
+        ul.files li:first-child { border-top: none; }
+        footer {
+            margin-top: 2.5rem;
+            font-size: 0.85rem;
+            color: var(--muted);
+        }
+        .sample {
+            margin-top: 1.75rem;
+            font-size: 1.5rem;
+            line-height: 1.6;
+        }
+        .sample span {
+            display: block;
+            font-size: 0.8rem;
+            color: var(--muted);
+            font-family: system-ui, sans-serif;
+        }
+    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Hanuman:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="wrap">
+        <h1>Myura PGF Glyphs</h1>
+        <p class="tagline">MapLibre glyph ranges for shaped Khmer text</p>
+
+        <div class="card">
+            <span class="badge">Khmer</span>
+            <h2>Hanuman Regular v1</h2>
+            <p class="meta">249 positioned glyphs · PUA range 63488–63743 · ~107 KB</p>
+
+            <div class="sample">
+                <span>Sample (web font)</span>
+                កម្ពុជា · ភ្នំពេញ · ក្រុងសៀមរាប
+            </div>
+
+            <ul class="files">
+                <li>
+                    <a href="khm/Hanuman-Regular-v1/63488-63743.pbf">63488-63743.pbf</a>
+                </li>
+            </ul>
+
+            <p class="meta" style="margin-top: 1rem;">Base URL</p>
+            <pre id="base-url">https://myura-map.github.io/pbf/khm/Hanuman-Regular-v1/</pre>
+        </div>
+
+        <div class="card">
+            <h2>MapLibre snippet</h2>
+            <pre>map.setTransformRequest((url, resourceType) => {
+  if (resourceType !== 'Glyphs') return;
+  const m = url.match(/(\d+)-(\d+)\.pbf$/);
+  if (!m || m[1] !== '63488') return;
+  return {
+    url: `https://myura-map.github.io/pbf/khm/Hanuman-Regular-v1/${m[1]}-${m[2]}.pbf`
+  };
+});</pre>
+        </div>
+
+        <div class="card">
+            <h2>Docs</h2>
+            <p>
+                Generate fonts with
+                <a href="https://github.com/Myura-Map/Myura_UFOS/tree/main/tools/font_encoder">font_encoder</a>.
+                Khmer rendering guide:
+                <a href="https://github.com/Myura-Map/Myura_UFOS/blob/main/samples/khmer-text-rendering.md">khmer-text-rendering.md</a>.
+                Requires
+                <a href="https://github.com/wipfli/maplibre-gl-complex-text">maplibre-gl-complex-text</a>.
+            </p>
+        </div>
+
+        <footer>
+            <a href="https://github.com/Myura-Map/pbf">GitHub</a> · Hanuman © Danh Hong (OFL)
+        </footer>
+    </div>
+    <script>
+        (function () {
+            var origin = location.origin + location.pathname.replace(/\/?index\.html$/, '').replace(/\/?$/, '/');
+            var el = document.getElementById('base-url');
+            if (el && location.protocol !== 'file:') {
+                el.textContent = origin + 'khm/Hanuman-Regular-v1/';
+            }
+        })();
+    </script>
+</body>
+</html>
