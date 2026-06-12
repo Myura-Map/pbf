@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Khmer labels — Myura PGF fonts</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="MapLibre demo using Myura-hosted PGF glyph ranges for shaped Khmer country labels.">
+    <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css">
+    <script src="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.js"></script>
+    <style>
+        :root {
+            color-scheme: light dark;
+            --panel-bg: rgba(255, 255, 255, 0.94);
+            --panel-text: #1a1a1a;
+            --panel-muted: #5c534a;
+            --panel-border: #e8dfd6;
+            --accent: #c45c26;
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --panel-bg: rgba(30, 27, 24, 0.94);
+                --panel-text: #f2ebe3;
+                --panel-muted: #a89b8f;
+                --panel-border: #3a342e;
+                --accent: #e8844f;
+            }
+        }
+        html, body, #map { height: 100%; margin: 0; }
+        body { font-family: system-ui, sans-serif; }
+
+        .panel {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            z-index: 1;
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 10px;
+            padding: 12px 14px;
+            max-width: min(22rem, calc(100vw - 24px));
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+        }
+        .panel h1 {
+            font-size: 0.95rem;
+            margin: 0 0 10px;
+            font-weight: 600;
+            color: var(--panel-text);
+        }
+        label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: var(--panel-muted);
+            margin-bottom: 4px;
+        }
+        select {
+            width: 100%;
+            font: inherit;
+            font-size: 0.9rem;
+            padding: 8px 10px;
+            border-radius: 6px;
+            border: 1px solid var(--panel-border);
+            background: transparent;
+            color: var(--panel-text);
+            margin-bottom: 10px;
+        }
+        .meta {
+            font-size: 0.78rem;
+            color: var(--panel-muted);
+            line-height: 1.45;
+            margin: 0;
+        }
+        .meta a { color: var(--accent); }
+        .meta code {
+            font-size: 0.72rem;
+            word-break: break-all;
+        }
+    </style>
+</head>
+<body>
+<div id="map"></div>
+<div class="panel">
+    <h1>PGF Khmer labels</h1>
+    <label for="font-select">Glyph font</label>
+    <select id="font-select" disabled>
+        <option>Loading fonts…</option>
+    </select>
+    <p class="meta" id="font-meta"></p>
+</div>
+
+<script>
+    const COUNTRY_LABEL_LAYERS = ['label_country_1', 'label_country_2', 'label_country_3'];
+
+    const COUNTRY_LABEL_TEXT_FIELD = [
+        'format',
+        ['coalesce', ['get', 'name:latin'], ['get', 'name_en'], ['get', 'name']],
+        {'font-scale': 1.2},
+        '\n',
+        {},
+        ['coalesce', ['get', 'name:nonlatin'], ['get', 'name']],
+        {'font-scale': 0.8}
+    ];
+
+    // Noto multiscript ranges — used when no custom font is selected (plugin default).
+    const NOTO_MULTISCRIPT_RANGE_STARTS = [
+        63488, 63232, 62976, 62720, 62464, 62208, 61952, 61696, 61440, 61184,
+        60928, 60672, 60416, 60160, 59904, 59648, 59392, 59136, 58880, 58624,
+        58368, 58112, 57856, 57600, 3072, 2816, 2560, 2304, 10240, 10752
+    ];
+
+    maplibregl.setRTLTextPlugin(
+        'https://wipfli.github.io/maplibre-gl-complex-text/dist/maplibre-gl-complex-text.js',
+        false
+    );
+
+    function cdnBase() {
+        if (location.protocol === 'file:') {
+            return 'https://myura-map.github.io/pbf/';
+        }
+        const path = location.pathname.replace(/\/?sample\.html$/, '').replace(/\/?$/, '/');
+        return location.origin + path;
+    }
+
+    const PBF_CDN = cdnBase();
+    let fonts = [];
+    let map = null;
+    let selectedFont = null;
+
+    function glyphUrl(font, start, end) {
+        return `${PBF_CDN}${font.path}/${start}-${end}.pbf`;
+    }
+
+    function makeTransformRequest(font) {
+        const rangeSet = new Set(font ? font.ranges : NOTO_MULTISCRIPT_RANGE_STARTS);
+
+        return (url, resourceType) => {
+            if (resourceType !== 'Glyphs') {
+                return undefined;
+            }
+
+            const match = url.match(/(\d+)-(\d+)\.pbf$/);
+            if (!match) {
+                return undefined;
+            }
+
+            const start = parseInt(match[1], 10);
+            const end = match[2];
+
+            if (!rangeSet.has(start)) {
+                return undefined;
+            }
+
+            if (font) {
+                return { url: glyphUrl(font, start, end) };
+            }
+
+            return {
+                url: `https://wipfli.github.io/pgf-glyph-ranges/font/NotoSansMultiscript-Regular-v1/${start}-${end}.pbf`
+            };
+        };
+    }
+
+    function applyCountryLabels() {
+        for (const layerId of COUNTRY_LABEL_LAYERS) {
+            if (map.getLayer(layerId)) {
+                map.setLayoutProperty(layerId, 'text-field', COUNTRY_LABEL_TEXT_FIELD);
+            }
+        }
+    }
+
+    function updateMeta(font) {
+        const el = document.getElementById('font-meta');
+        const ranges = font.ranges.join(', ');
+        el.innerHTML =
+            `<strong>${font.script}</strong> · ranges ${ranges}<br>` +
+            `<code>${PBF_CDN}${font.path}/</code><br>` +
+            `<a href="index.html">All fonts</a>`;
+    }
+
+    function initMap(font) {
+        if (map) {
+            map.remove();
+            map = null;
+        }
+
+        selectedFont = font;
+        const center = font.mapCenter || [104.9, 12.55];
+        const zoom = font.mapZoom != null ? font.mapZoom : 6;
+
+        map = new maplibregl.Map({
+            container: 'map',
+            style: 'https://tiles.openfreemap.org/styles/bright',
+            center,
+            zoom
+        });
+
+        map.setTransformRequest(makeTransformRequest(font));
+
+        map.on('load', () => {
+            applyCountryLabels();
+        });
+    }
+
+    function populateSelect(items) {
+        const select = document.getElementById('font-select');
+        select.innerHTML = '';
+
+        for (const font of items) {
+            const option = document.createElement('option');
+            option.value = font.id;
+            option.textContent = font.label;
+            select.appendChild(option);
+        }
+
+        select.disabled = items.length === 0;
+
+        select.addEventListener('change', () => {
+            const font = fonts.find((f) => f.id === select.value);
+            if (font) {
+                updateMeta(font);
+                initMap(font);
+            }
+        });
+    }
+
+    async function loadFonts() {
+        const response = await fetch(`${PBF_CDN}fonts.json`);
+        if (!response.ok) {
+            throw new Error(`fonts.json HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+        fonts = data.fonts || [];
+
+        if (fonts.length === 0) {
+            document.getElementById('font-select').innerHTML =
+                '<option>No fonts in fonts.json</option>';
+            return;
+        }
+
+        populateSelect(fonts);
+
+        const params = new URLSearchParams(location.search);
+        const requested = params.get('font');
+        const initial = fonts.find((f) => f.id === requested) || fonts[0];
+
+        document.getElementById('font-select').value = initial.id;
+        updateMeta(initial);
+        initMap(initial);
+    }
+
+    loadFonts().catch((err) => {
+        console.error(err);
+        const select = document.getElementById('font-select');
+        select.innerHTML = '<option>Failed to load fonts.json</option>';
+        document.getElementById('font-meta').textContent = String(err);
+    });
+</script>
+</body>
+</html>

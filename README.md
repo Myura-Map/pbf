@@ -81,9 +81,29 @@ Note: PGF setups often use `transformRequest` instead, because the font stack in
 ## Adding a new font
 
 1. Run the [font_encoder](https://github.com/Myura-Map/Myura_UFOS/tree/main/tools/font_encoder) pipeline (`encoding.py`, then `build_pbf.sh`).
-2. Copy output into a script folder, e.g. `khm/Siemreap-Regular-v1/`.
-3. Update this README and `index.html`.
-4. Push to `main`.
+2. Copy `.pbf` output into a folder, e.g. `khm/Siemreap-Regular-v1/`.
+3. Add an entry to **`fonts.json`** (used by `sample.html`):
+
+```json
+{
+  "id": "khm-siemreap-v1",
+  "label": "Siemreap Regular v1",
+  "script": "Khmer",
+  "path": "khm/Siemreap-Regular-v1",
+  "ranges": [63488],
+  "mapCenter": [104.9, 12.55],
+  "mapZoom": 6
+}
+```
+
+4. Update this README and `index.html` if you like.
+5. Push to `main`.
+
+`ranges` are the PUA block starts from `python3 glyph_ranges.py` (e.g. `63488` for `63488-63743.pbf`).
+
+### Demo page
+
+[`sample.html`](https://myura-map.github.io/pbf/sample.html) — pick a font from the dropdown. Deep link: `sample.html?font=khm-hanuman-v1`.
 
 ## License
 

@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "fonts": [
+    {
+      "id": "khm-hanuman-v1",
+      "label": "Hanuman Regular v1",
+      "script": "Khmer",
+      "path": "khm/Hanuman-Regular-v1",
+      "ranges": [63488],
+      "mapCenter": [104.9, 12.55],
+      "mapZoom": 6
+    }
+  ]
+}
