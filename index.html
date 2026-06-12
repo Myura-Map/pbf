@@ -125,6 +125,15 @@
             color: var(--muted);
             font-family: system-ui, sans-serif;
         }
+        .status {
+            color: var(--muted);
+            font-size: 0.95rem;
+        }
+        .status.error { color: #b33; }
+        .card-actions {
+            margin-top: 0.75rem;
+            font-size: 0.9rem;
+        }
     </style>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -135,36 +144,13 @@
         <h1>Myura PGF Glyphs</h1>
         <p class="tagline">MapLibre glyph ranges for shaped Khmer text</p>
 
-        <div class="card">
-            <span class="badge">Khmer</span>
-            <h2>Hanuman Regular v1</h2>
-            <p class="meta">249 positioned glyphs · PUA range 63488–63743 · ~107 KB</p>
+        <div id="fonts-status" class="status">Loading fonts…</div>
+        <div id="fonts-list"></div>
 
-            <div class="sample">
-                <span>Sample (web font)</span>
-                កម្ពុជា · ភ្នំពេញ · ក្រុងសៀមរាប
-            </div>
-
-            <ul class="files">
-                <li>
-                    <a href="khm/Hanuman-Regular-v1/63488-63743.pbf">63488-63743.pbf</a>
-                </li>
-            </ul>
-
-            <p class="meta" style="margin-top: 1rem;">Base URL</p>
-            <pre id="base-url">https://myura-map.github.io/pbf/khm/Hanuman-Regular-v1/</pre>
-        </div>
-
-        <div class="card">
+        <div class="card" id="snippet-card" hidden>
             <h2>MapLibre snippet</h2>
-            <pre>map.setTransformRequest((url, resourceType) => {
-  if (resourceType !== 'Glyphs') return;
-  const m = url.match(/(\d+)-(\d+)\.pbf$/);
-  if (!m || m[1] !== '63488') return;
-  return {
-    url: `https://myura-map.github.io/pbf/khm/Hanuman-Regular-v1/${m[1]}-${m[2]}.pbf`
-  };
-});</pre>
+            <p class="meta" id="snippet-meta"></p>
+            <pre id="snippet-code"></pre>
         </div>
 
         <div class="card">
@@ -181,24 +167,172 @@
                 Generate fonts with
                 <a href="https://github.com/Myura-Map/Myura_UFOS/tree/main/tools/font_encoder">font_encoder</a>.
                 Khmer rendering guide:
-                <a href="https://github.com/Myura-Map/Myura_UFOS/blob/main/samples/khmer-text-rendering.md">khmer-text-rendering.md</a>.
+                <a href="https://github.com/Myura-Map/Myura_UFOS/blob/main/tools/font_encoder/khmer-text-rendering.md">khmer-text-rendering.md</a>.
                 Requires
                 <a href="https://github.com/wipfli/maplibre-gl-complex-text">maplibre-gl-complex-text</a>.
             </p>
         </div>
 
         <footer>
-            <a href="https://github.com/Myura-Map/pbf">GitHub</a> · Hanuman © Danh Hong (OFL)
+            <a href="https://github.com/Myura-Map/pbf">GitHub</a>
+            <span id="footer-fonts"></span>
         </footer>
     </div>
     <script>
-        (function () {
-            var origin = location.origin + location.pathname.replace(/\/?index\.html$/, '').replace(/\/?$/, '/');
-            var el = document.getElementById('base-url');
-            if (el && location.protocol !== 'file:') {
-                el.textContent = origin + 'khm/Hanuman-Regular-v1/';
+        const NOTO_GLYPH_CDN =
+            'https://wipfli.github.io/pgf-glyph-ranges/font/NotoSansMultiscript-Regular-v1';
+        const KHMER_SAMPLE = 'កម្ពុជា · ភ្នំពេញ · ក្រុងសៀមរាប';
+
+        function cdnBase() {
+            if (location.protocol === 'file:') {
+                return 'https://myura-map.github.io/pbf/';
             }
-        })();
+            const path = location.pathname.replace(/\/?index\.html$/, '').replace(/\/?$/, '/');
+            return location.origin + path;
+        }
+
+        function escapeHtml(value) {
+            return String(value)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+
+        function formatRanges(ranges) {
+            if (!ranges || ranges.length === 0) {
+                return '—';
+            }
+            return ranges
+                .map((start) => `${start}–${start + 255}`)
+                .join(', ');
+        }
+
+        function rangeFilename(start) {
+            return `${start}-${start + 255}.pbf`;
+        }
+
+        function isHostedFont(font) {
+            return font.glyphSource !== 'noto-multiscript';
+        }
+
+        function renderFontCard(font, base) {
+            const hosted = isHostedFont(font);
+            const ranges = font.ranges || [];
+            const baseUrl = `${base}${font.path}/`;
+
+            let filesHtml = '';
+            if (hosted && ranges.length > 0) {
+                const items = ranges
+                    .map((start) => {
+                        const file = rangeFilename(start);
+                        const href = `${baseUrl}${file}`;
+                        return `<li><a href="${escapeHtml(href)}">${escapeHtml(file)}</a></li>`;
+                    })
+                    .join('');
+                filesHtml =
+                    `<ul class="files">${items}</ul>` +
+                    `<p class="meta" style="margin-top: 1rem;">Base URL</p>` +
+                    `<pre>${escapeHtml(baseUrl)}</pre>`;
+            } else if (!hosted) {
+                filesHtml =
+                    `<p class="meta">Reference glyphs are hosted externally:</p>` +
+                    `<pre>${escapeHtml(NOTO_GLYPH_CDN)}/</pre>`;
+            }
+
+            const sourceNote = font.glyphSource === 'custom'
+                ? 'Custom encoding · requires a matching complex-text plugin build for map labels.'
+                : 'Plugin default encoding · use for visible Khmer labels today.';
+
+            return (
+                `<div class="card" data-font-id="${escapeHtml(font.id)}">` +
+                `<span class="badge">${escapeHtml(font.script || 'Font')}</span>` +
+                `<h2>${escapeHtml(font.label)}</h2>` +
+                `<p class="meta">PUA ranges ${escapeHtml(formatRanges(ranges))} · ${escapeHtml(sourceNote)}</p>` +
+                `<div class="sample"><span>Sample (web font)</span>${KHMER_SAMPLE}</div>` +
+                filesHtml +
+                `<p class="card-actions"><a href="sample.html?font=${encodeURIComponent(font.id)}">Open in sample map</a></p>` +
+                `</div>`
+            );
+        }
+
+        function buildSnippet(font, base) {
+            if (!font || !isHostedFont(font)) {
+                return null;
+            }
+
+            const rangeChecks = (font.ranges || [])
+                .map((start) => `  if (m[1] === '${start}')`)
+                .join('\n');
+
+            const rangeBlock = rangeChecks
+                ? `${rangeChecks}\n    return {\n      url: \`${base}${font.path}/\${m[1]}-\${m[2]}.pbf\`\n    };`
+                : `  return {\n    url: \`${base}${font.path}/\${m[1]}-\${m[2]}.pbf\`\n  };`;
+
+            return `map.setTransformRequest((url, resourceType) => {
+  if (resourceType !== 'Glyphs') return;
+  const m = url.match(/(\\d+)-(\\d+)\\.pbf$/);
+  if (!m) return;
+${rangeBlock}
+});`;
+        }
+
+        function updateSnippet(fonts, base) {
+            const example = fonts.find(isHostedFont);
+            const card = document.getElementById('snippet-card');
+            const meta = document.getElementById('snippet-meta');
+            const code = document.getElementById('snippet-code');
+
+            if (!example) {
+                card.hidden = true;
+                return;
+            }
+
+            card.hidden = false;
+            meta.textContent = `Example for ${example.label} (id: ${example.id}).`;
+            code.textContent = buildSnippet(example, base);
+        }
+
+        function updateFooter(fonts) {
+            const hosted = fonts.filter(isHostedFont);
+            if (hosted.length === 0) {
+                return;
+            }
+            const names = hosted.map((font) => font.label).join(', ');
+            document.getElementById('footer-fonts').textContent = ` · ${names} © respective authors (OFL)`;
+        }
+
+        async function loadFonts() {
+            const status = document.getElementById('fonts-status');
+            const list = document.getElementById('fonts-list');
+            const base = cdnBase();
+
+            try {
+                const response = await fetch(`${base}fonts.json`);
+                if (!response.ok) {
+                    throw new Error(`fonts.json HTTP ${response.status}`);
+                }
+
+                const data = await response.json();
+                const fonts = data.fonts || [];
+
+                if (fonts.length === 0) {
+                    status.textContent = 'No fonts listed in fonts.json.';
+                    return;
+                }
+
+                status.remove();
+                list.innerHTML = fonts.map((font) => renderFontCard(font, base)).join('');
+                updateSnippet(fonts, base);
+                updateFooter(fonts);
+            } catch (err) {
+                status.textContent = `Failed to load fonts.json: ${err.message}`;
+                status.classList.add('error');
+                console.error(err);
+            }
+        }
+
+        loadFonts();
     </script>
 </body>
 </html>
