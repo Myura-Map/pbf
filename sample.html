@@ -103,12 +103,14 @@
         {'font-scale': 0.8}
     ];
 
-    // Noto multiscript ranges — used when no custom font is selected (plugin default).
+    // PUA blocks used by maplibre-gl-complex-text (Noto multiscript encoding).
     const NOTO_MULTISCRIPT_RANGE_STARTS = [
         63488, 63232, 62976, 62720, 62464, 62208, 61952, 61696, 61440, 61184,
         60928, 60672, 60416, 60160, 59904, 59648, 59392, 59136, 58880, 58624,
         58368, 58112, 57856, 57600, 3072, 2816, 2560, 2304, 10240, 10752
     ];
+    const NOTO_GLYPH_CDN =
+        'https://wipfli.github.io/pgf-glyph-ranges/font/NotoSansMultiscript-Regular-v1';
 
     maplibregl.setRTLTextPlugin(
         'https://wipfli.github.io/maplibre-gl-complex-text/dist/maplibre-gl-complex-text.js',
@@ -133,7 +135,7 @@
     }
 
     function makeTransformRequest(font) {
-        const rangeSet = new Set(font ? font.ranges : NOTO_MULTISCRIPT_RANGE_STARTS);
+        const notoRanges = new Set(NOTO_MULTISCRIPT_RANGE_STARTS);
 
         return (url, resourceType) => {
             if (resourceType !== 'Glyphs') {
@@ -148,17 +150,13 @@
             const start = parseInt(match[1], 10);
             const end = match[2];
 
-            if (!rangeSet.has(start)) {
+            if (!notoRanges.has(start)) {
                 return undefined;
             }
 
-            if (font) {
-                return { url: glyphUrl(font, start, end) };
-            }
-
-            return {
-                url: `https://wipfli.github.io/pgf-glyph-ranges/font/NotoSansMultiscript-Regular-v1/${start}-${end}.pbf`
-            };
+            // The complex-text plugin always shapes Khmer with Noto multiscript codepoints.
+            // Custom Myura PBF files use a different encoding until the plugin is rebuilt.
+            return { url: `${NOTO_GLYPH_CDN}/${start}-${end}.pbf` };
         };
     }
 
@@ -172,9 +170,13 @@
 
     function updateMeta(font) {
         const el = document.getElementById('font-meta');
-        const ranges = font.ranges.join(', ');
+        const ranges = (font.ranges || []).join(', ');
+        const encodingNote = font.glyphSource === 'custom'
+            ? 'Labels use Noto reference glyphs (plugin encoding). Hosted PBF is for a future custom-encoding build.<br>'
+            : '';
         el.innerHTML =
             `<strong>${font.script}</strong> · ranges ${ranges}<br>` +
+            encodingNote +
             `<code>${PBF_CDN}${font.path}/</code><br>` +
             `<a href="index.html">All fonts</a>`;
     }
@@ -244,7 +246,9 @@
 
         const params = new URLSearchParams(location.search);
         const requested = params.get('font');
-        const initial = fonts.find((f) => f.id === requested) || fonts[0];
+        const initial = fonts.find((f) => f.id === requested)
+            || fonts.find((f) => f.glyphSource === 'noto-multiscript')
+            || fonts[0];
 
         document.getElementById('font-select').value = initial.id;
         updateMeta(initial);

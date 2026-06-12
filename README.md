@@ -10,7 +10,9 @@ Built from [Myura-Map/Myura_UFOS `tools/font_encoder`](https://github.com/Myura-
 
 | Script | Font | Version | Ranges |
 |--------|------|---------|--------|
+| Khmer (`khm`) | Noto Sans Multiscript (reference) | — | plugin default |
 | Khmer (`khm`) | Hanuman Regular | v1 | `63488-63743` |
+| Khmer (`khm`) | Siemreap Regular | v1 | `63488-63743` |
 
 ### Direct URLs
 

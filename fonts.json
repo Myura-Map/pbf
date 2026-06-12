@@ -2,12 +2,43 @@
   "version": 1,
   "fonts": [
     {
+      "id": "khm-noto-multiscript",
+      "label": "Noto Sans Multiscript (reference)",
+      "script": "Khmer",
+      "glyphSource": "noto-multiscript",
+      "path": "font/NotoSansMultiscript-Regular-v1",
+      "ranges": [59904, 60160, 60416, 60672, 60928],
+      "mapCenter": [104.9, 12.55],
+      "mapZoom": 6
+    },
+    {
       "id": "khm-hanuman-v1",
       "label": "Hanuman Regular v1",
       "script": "Khmer",
+      "glyphSource": "custom",
       "path": "khm/Hanuman-Regular-v1",
-      "ranges": [63488],
-      "mapCenter": [104.9, 12.55],
+      "ranges": [
+        63488
+      ],
+      "mapCenter": [
+        104.9,
+        12.55
+      ],
+      "mapZoom": 6
+    },
+    {
+      "id": "khm-siemreap-v1",
+      "label": "Siemreap Regular v1",
+      "script": "Khmer",
+      "glyphSource": "custom",
+      "path": "khm/Siemreap-Regular-v1",
+      "ranges": [
+        63488
+      ],
+      "mapCenter": [
+        104.9,
+        12.55
+      ],
       "mapZoom": 6
     }
   ]
